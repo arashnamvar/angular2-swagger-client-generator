@@ -1,7 +1,7 @@
 'use strict';
 
 var fs = require('fs');
-var Mustache = require('mustache');
+var Handlebars = require('handlebars');
 var yamljs = require('yamljs');
 //var beautify = require('js-beautify').js_beautify;
 //var Linter = require('tslint');
@@ -25,7 +25,7 @@ var Generator = (function () {
         this.LogMessage('Parsing Swagger YAML');
         this.swaggerParsed = yamljs.load(this._swaggerfile);
 
-        this.LogMessage('Reading Mustache templates');
+        this.LogMessage('Reading Handlebars templates');
 
         this.templates = {
             'class': fs.readFileSync(__dirname + "/../templates/angular2-service.mustache", 'utf-8'),
@@ -33,8 +33,8 @@ var Generator = (function () {
             'models_export': fs.readFileSync(__dirname + "/../templates/angular2-models-export.mustache", 'utf-8')
         };
 
-        this.LogMessage('Creating Mustache viewModel');
-        this.viewModel = this.createMustacheViewModel();
+        this.LogMessage('Creating Handlebars viewModel');
+        this.viewModel = this.createHandlebarsViewModel();
 
         this.initialized = true;
     }
@@ -104,10 +104,11 @@ var Generator = (function () {
         fs.writeFileSync(outfile, result, 'utf-8')
     };
 
-    Generator.prototype.renderLintAndBeautify = function (tempalte, model) {
+    Generator.prototype.renderLintAndBeautify = function (template, model) {
 
         // Render *****
-        var result = Mustache.render(tempalte, model);
+        var compiledTemplate = Handlebars.compile(template);
+        var result = compiledTemplate(model);
 
         // Lint *****
         // var ll = new Linter("noname", rendered, {});
@@ -124,7 +125,7 @@ var Generator = (function () {
         return result;
     }
 
-    Generator.prototype.createMustacheViewModel = function () {
+    Generator.prototype.createHandlebarsViewModel = function () {
         var that = this;
         var swagger = this.swaggerParsed;
         var authorizedMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
