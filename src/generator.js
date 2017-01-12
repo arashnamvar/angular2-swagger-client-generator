@@ -2,6 +2,7 @@
 
 var fs = require('fs');
 var Mustache = require('mustache');
+var yamljs = require('yamljs');
 //var beautify = require('js-beautify').js_beautify;
 //var Linter = require('tslint');
 var _ = require('lodash');
@@ -16,11 +17,13 @@ var Generator = (function () {
     Generator.prototype.Debug = false;
 
     Generator.prototype.initialize = function () {
-        this.LogMessage('Reading Swagger file', this._swaggerfile);
-        var swaggerfilecontent = fs.readFileSync(this._swaggerfile, 'UTF-8');
+        //this.LogMessage('Reading Swagger file', this._swaggerfile);
+        //var swaggerfilecontent = fs.readFileSync(this._swaggerfile, 'UTF-8');
 
-        this.LogMessage('Parsing Swagger JSON');
-        this.swaggerParsed = JSON.parse(swaggerfilecontent);
+        //this.LogMessage('Parsing Swagger JSON');
+        //this.swaggerParsed = JSON.parse(swaggerfilecontent);
+        this.LogMessage('Parsing Swagger YAML');
+        this.swaggerParsed = yamljs.load(this._swaggerfile);
 
         this.LogMessage('Reading Mustache templates');
 
@@ -70,8 +73,8 @@ var Generator = (function () {
 
         if (!fs.existsSync(outputdir))
             fs.mkdirSync(outputdir);
-			
-        // generate API models				
+
+        // generate API models
         _.forEach(this.viewModel.definitions, function (definition, defName) {
             that.LogMessage('Rendering template for model: ', definition.name);
             var result = that.renderLintAndBeautify(that.templates.model, definition, that.templates);
@@ -117,7 +120,7 @@ var Generator = (function () {
         // Beautify *****
         // NOTE: this has been commented because of curly braces were added on newline after beaufity
         //result = beautify(result, { indent_size: 4, max_preserve_newlines: 2 });
-        
+
         return result;
     }
 
@@ -148,16 +151,16 @@ var Generator = (function () {
                 if (authorizedMethods.indexOf(m.toUpperCase()) === -1){
                     return;
                 }
-                
+
                 // The description line is optional in the spec
                 var summaryLines = [];
                 if (op.description) {
                     summaryLines = op.description.split('\n');
                     summaryLines.splice(summaryLines.length-1, 1);
                 }
-                
-                
-                
+
+
+
                 var method = {
                     path: path,
                     backTickPath: path.replace(/(\{.*?\})/g, "$$$1"),
@@ -165,7 +168,7 @@ var Generator = (function () {
                     method: m.toUpperCase(),
                     angular2httpMethod: m.toLowerCase(),
                     isGET: m.toUpperCase() === 'GET',
-                    hasPayload: !_.includes(['GET','DELETE','HEAD'], m.toUpperCase()), 
+                    hasPayload: !_.includes(['GET','DELETE','HEAD'], m.toUpperCase()),
                     summaryLines: summaryLines,
                     isSecure: swagger.security !== undefined || op.security !== undefined,
                     parameters: [],
@@ -184,7 +187,7 @@ var Generator = (function () {
                 _.forEach(params, function (parameter) {
                     // Ignore headers which are injected by proxies & app servers
                     // eg: https://cloud.google.com/appengine/docs/go/requests#Go_Request_headers
-					
+
                     if (parameter['x-proxy-header'] && !data.isNode)
                         return;
 
@@ -240,6 +243,7 @@ var Generator = (function () {
                 name: defName,
                 properties: [],
                 refs: [],
+                imports: [],
             };
 
             _.forEach(defin.properties, function (propin, propVal) {
@@ -268,6 +272,11 @@ var Generator = (function () {
                 else
                     definition.properties.push(property);
             });
+
+            definition.imports = definition.refs
+              .map(ref => ref.typescriptType)
+              .filter((value, index, self) => { return self.indexOf(value) === index; })
+              .sort();
 
             data.definitions.push(definition);
         });

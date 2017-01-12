@@ -1,3 +1,8 @@
+# Whats new in this fork?
+* Parsing YAML file instead of JSON
+* Fixed duplicit imports when a required sub-model is used multiple times
+* Generating dummy constructors instead of plain objects
+
 # angular2-swagger-apiclient-generator
 Angular 2 API client generator from swagger json
 
