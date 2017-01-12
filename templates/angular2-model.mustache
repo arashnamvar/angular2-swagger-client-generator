@@ -1,24 +1,21 @@
 /* tslint:disable */
-{{#refs}}
-import { {{type}} } from "./{{type}}"
-{{/refs}}
+{{#imports}}
+import { {{.}} } from "./{{.}}"
+{{/imports}}
 
 export class {{&name}} {
+	constructor(
 {{#properties}}
-	{{#isArray}}
-		{{name}}: {{typescriptType}}[];
-	{{/isArray}}
-	{{^isArray}}
-		{{name}}: {{typescriptType}};
-	{{/isArray}}
+		public {{name}}: {{typescriptType}} = null,
 {{/properties}}
-
 {{#refs}}
 	{{#isArray}}
-		{{name}}: {{typescriptType}}[];
+		public {{name}}: {{typescriptType}}[] = []{{^last}}, {{/last}}
 	{{/isArray}}
 	{{^isArray}}
-		{{name}}: {{typescriptType}};
+		public {{name}}: {{typescriptType}} = new {{typescriptType}}(){{^last}}, {{/last}}
 	{{/isArray}}
 {{/refs}}
+	){}
+
 }
