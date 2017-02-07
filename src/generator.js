@@ -43,7 +43,7 @@ var Generator = (function () {
         if (this.initialized !== true)
             this.initialize();
 
-        this.generateClient();
+        //this.generateClient();
         this.generateModels();
         this.generateCommonModelsExportDefinition();
 
