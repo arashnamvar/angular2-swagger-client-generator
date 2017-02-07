@@ -28,7 +28,7 @@ var Generator = (function () {
         this.LogMessage('Reading Handlebars templates');
 
         this.templates = {
-            'class': fs.readFileSync(__dirname + "/../templates/angular2-service.mustache", 'utf-8'),
+            //'class': fs.readFileSync(__dirname + "/../templates/angular2-service.mustache", 'utf-8'),
             'model': fs.readFileSync(__dirname + "/../templates/angular2-model.mustache", 'utf-8'),
             'models_export': fs.readFileSync(__dirname + "/../templates/angular2-models-export.mustache", 'utf-8')
         };
@@ -43,7 +43,7 @@ var Generator = (function () {
         if (this.initialized !== true)
             this.initialize();
 
-        this.generateClient();
+        //this.generateClient();
         this.generateModels();
         this.generateCommonModelsExportDefinition();
 
@@ -55,8 +55,8 @@ var Generator = (function () {
             this.initialize();
 
         // generate main API client class
-        this.LogMessage('Rendering template for API');
-        var result = this.renderLintAndBeautify(this.templates.class, this.viewModel, this.templates);
+        //this.LogMessage('Rendering template for API');
+        //var result = this.renderLintAndBeautify(this.templates.class, this.viewModel, this.templates);
 
         var outfile = this._outputPath + "/" + "index.ts";
         this.LogMessage('Creating output file', outfile);
