@@ -2,8 +2,22 @@
 * Parsing YAML file instead of JSON
 * Fixed duplicit imports when a required sub-model is used multiple times
 * Generating dummy constructors instead of plain objects
+* Using Handlebars instead of Mustache
+* After all, I disabled the service generator alltogether as
+  we have to handle way too many special cases on our own.
 
-# angular2-swagger-apiclient-generator
+# Installing
+Just install it using
+`npm i -g kub1x/angular2-swagger-apiclient-generator`
+and use it with:
+`npm run cleangen && npm run apigen`
+where (in `package.json` file):
+```
+"cleangen": "npm run rimraf -- src/app/apigen",
+"apigen": "a2apigen -s swagger.yaml -o src/app/apigen"
+```
+
+# ORIGINAL DOCUMENTATION: angular2-swagger-apiclient-generator
 Angular 2 API client generator from swagger json
 
 # Description

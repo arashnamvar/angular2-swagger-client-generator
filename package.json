@@ -11,6 +11,7 @@
     "name": "Navid Nikpour",
     "email": "navid@nikpour.com"
   },
+  "contributors": "Jakub kub1x Podlaha <j.podlaha@gmail.com>",
   "bugs": {
     "url": "https://github.com/kub1x/angular2-swagger-client-generator/issues"
   },
