@@ -1,40 +1,63 @@
 /* tslint:disable */
-import { Injectable } from '@angular2/core';
-import { Http, Response, Headers } from '@angular2/http';
-import { {{#definitions}}{{name}}{{^last}}, {{/last}}{{/definitions}} } from './models';
-import 'rxjs/Rx';
+import { Injectable } from '@angular/core';
+import { Headers, Http, Response, URLSearchParams } from '@angular/http';
 
+import { Observable } from 'rxjs/Observable';
+
+import { Config } from '../config';
+import { HttpRestJsonService } from '../core';
+import { ObjectExtraOptions } from '../core/http/http-rest-json.service';
+
+// import { {{#definitions}}{{name}}{{^last}}, {{/last}}{{/definitions}} } from './models';
+import RequestGen from './models';
 
 @Injectable()
-/**
- * Created with angular2-swagger-client-generator v{{&version}}
- */
-export class ApiClientService {
-	domain:string;
+export class KBOnlineService {
+  protected url: string;
+  private _kbOnline:apigen.RequestGen = new apigen.RequestGen();
 
-  constructor(public http: Http){
+  constructor(private config: Config, protected http: HttpRestJsonService<any>) {
+    // get url from config service
     {{#domain}}
-    this.domain = '{{&.}}';
+    this.url = config.getVal('kbOnline.apiUrl') || '{{&.}}';
     {{/domain}}
     {{^domain}}
-    this.domain = '';
+    this.url = config.getVal('kbOnline.apiUrl') || "http://localhost:8080/kb-online";
     {{/domain}}
+
+    {{!-- #isSecure}}
+      this.token = (typeof options === 'object') ? (options.token ? options.token : {}) : {};
+    {{/isSecure --}}
   }
-  /*
-	constructor(public http: Http, options?: any) {
-		var domain = (typeof options === 'object') ? options.domain : options;
-		this.domain = typeof(domain) === 'string' ? domain : '{{&domain}}';
 
-		if(this.domain.length === 0) {
-			throw new Error('Domain parameter must be specified as a string.');
-		}
+  get kbOnline():apigen.RequestGen {
+    return this._kbOnline;
+  }
 
-		{{#isSecure}}
-			this.token = (typeof options === 'object') ? (options.token ? options.token : {}) : {};
-		{{/isSecure}}
-	}
-  */
+  //pridano z duvodu unit-testu
+  set kbOnline(kbOnlineModel:apigen.RequestGen){
+    this._kbOnline = kbOnlineModel;
+  }
 
+  successCallback = (response) => {
+    return response.headers.get('Location').replace(/.*\//, '');
+  }
+
+  postRequest(): Observable<any> {
+    let headers = new Headers();
+    headers.append('Content-Type', 'application/json;charset=UTF-8');
+    headers.append('applicationId', '1');
+
+    let kbOnlineRequestOption:ObjectExtraOptions<any> = {
+      headers : headers,
+      successCallback : this.successCallback
+    }
+
+    const url = `${this.url}/requests`;
+    return this.http.addObject(url, this.kbOnline , kbOnlineRequestOption )
+      .do( requestId => console.log(requestId));
+
+  }
 
 {{#methods}}
 	/**
@@ -45,7 +68,7 @@ export class ApiClientService {
 	* @method
 	* @name {{&methodName}}
 	{{#parameters}}
-	{{^isSingleton}}* @param {{=<% %>=}}{<%&type%>}<%={{ }}=%> {{&camelCaseName}} - {{&description}}{{/isSingleton}}
+	{{^isSingleton}}* @param {{&type}} {{&camelCaseName}} - {{&description}}{{/isSingleton}}
 	{{/parameters}}
 	*
 	*/
@@ -62,16 +85,9 @@ export class ApiClientService {
         {{/isSingleton}}
 
 			  {{^isSingleton}}
-			    {{#isPatternType}}
-		Object.keys(parameters).forEach(function(parameterName) {
-			if(new RegExp('{{&pattern}}').test(parameterName)){
-				queryParameters[parameterName] = parameters[parameterName];
-			}
-		});
-          {{/isPatternType}}
 			    {{^isPatternType}}
-		if(parameters['{{&camelCaseName}}'] !== undefined){
-			queryParameters['{{&name}}'] = parameters['{{&camelCaseName}}'];
+		if({{&camelCaseName}} !== undefined){
+			queryParameters['{{&name}}'] = {{&camelCaseName}};
 		}
           {{/isPatternType}}
         {{/isSingleton}}
@@ -82,8 +98,8 @@ export class ApiClientService {
 		headers.append('{{&name}}', '{{&singleton}}');
         {{/isSingleton}}
         {{^isSingleton}}
-		if(parameters['{{&camelCaseName}}'] !== undefined){
-			headers.append('{{&name}}', parameters['{{&camelCaseName}}']);
+		if({{&camelCaseName}} !== undefined){
+			headers.append('{{&name}}', {{&camelCaseName}});
 		}
         {{/isSingleton}}
 			{{/isHeaderParameter}}
@@ -95,16 +111,16 @@ export class ApiClientService {
 		form['{{&name}}'] = '{{&singleton}}';
         {{/isSingleton}}
         {{^isSingleton}}
-		if(parameters['{{&camelCaseName}}'] !== undefined){
-			form['{{&name}}'] = parameters['{{&camelCaseName}}'];
+		if({{&camelCaseName}} !== undefined){
+			form['{{&name}}'] = {{&camelCaseName}};
 		}
 			  {{/isSingleton}}
 			{{/isFormParameter}}
 {{/parameters}}
 		let uri = `{{&backTickPath}}`;
 
-		return this.http
-			.{{angular2httpMethod}}(this.domain + uri{{#hasPayload}}, JSON.stringify({{#parameters}}{{#isBodyParameter}}{{&camelCaseName}}{{/isBodyParameter}}{{/parameters}}){{/hasPayload}}, { headers: headers, params: queryParameters })
+		return this.http[methodFun['{{angular2httpMethod}}']]()
+			.(this.url + uri{{#hasPayload}}, JSON.stringify({{#parameters}}{{#isBodyParameter}}{{&camelCaseName}}{{/isBodyParameter}}{{/parameters}}){{/hasPayload}}, { headers: headers })
 			.map((res: Response) => {
         return res;
       });
