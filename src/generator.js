@@ -136,8 +136,9 @@ var Generator = (function () {
             swagger: swagger,
             domain: (swagger.schemes && swagger.schemes.length > 0 && swagger.host && swagger.basePath) ? swagger.schemes[0] + '://' + swagger.host + swagger.basePath : '',
             methods: [],
-            definitions: []
+            definitions: [],
         };
+        var defMap = {};
 
         _.forEach(swagger.paths, function (api, path) {
             var globalParams = [];
@@ -149,7 +150,7 @@ var Generator = (function () {
             });
 
             _.forEach(api, function (op, m) {
-                if (authorizedMethods.indexOf(m.toUpperCase()) === -1){
+                if (authorizedMethods.indexOf(m.toUpperCase()) === -1) {
                     return;
                 }
 
@@ -157,7 +158,7 @@ var Generator = (function () {
                 var summaryLines = [];
                 if (op.description) {
                     summaryLines = op.description.split('\n');
-                    summaryLines.splice(summaryLines.length-1, 1);
+                    summaryLines.splice(summaryLines.length - 1, 1);
                 }
 
 
@@ -169,7 +170,7 @@ var Generator = (function () {
                     method: m.toUpperCase(),
                     angular2httpMethod: m.toLowerCase(),
                     isGET: m.toUpperCase() === 'GET',
-                    hasPayload: !_.includes(['GET','DELETE','HEAD'], m.toUpperCase()),
+                    hasPayload: !_.includes(['GET', 'DELETE', 'HEAD'], m.toUpperCase()),
                     summaryLines: summaryLines,
                     isSecure: swagger.security !== undefined || op.security !== undefined,
                     parameters: [],
@@ -218,8 +219,7 @@ var Generator = (function () {
                         parameter.isQueryParameter = true;
                         if (parameter['x-name-pattern'])
                             parameter.isPatternType = true;
-                    }
-                    else if (parameter.in === 'header')
+                    } else if (parameter.in === 'header')
                         parameter.isHeaderParameter = true;
 
                     else if (parameter.in === 'formData')
@@ -245,8 +245,11 @@ var Generator = (function () {
                 properties: [],
                 refs: [],
                 imports: [],
+                items: [],
+                isEnum: _.has(defin, 'enum'),
             };
 
+            // Properties
             _.forEach(defin.properties, function (propin, propVal) {
 
                 var property = {
@@ -267,19 +270,41 @@ var Generator = (function () {
                 else
                     property.typescriptType = property.type;
 
-
                 if (property.isRef)
                     definition.refs.push(property);
                 else
                     definition.properties.push(property);
-            });
+            }); //forEach(properties)
 
-            definition.imports = definition.refs
-              .map(ref => ref.typescriptType)
-              .filter((value, index, self) => { return self.indexOf(value) === index; })
-              .sort();
+            // Enum values
+            if (definition.isEnum) {
+                definition.items = defin.enum.map(item => { return { item }; });
+                if (definition.items.length) {
+                    definition.items[definition.items.length - 1].last = true;
+                }
+            }
 
+            // Store
+            defMap[definition.name] = definition;
             data.definitions.push(definition);
+        }); // end of definitions
+
+
+        // Create imports
+        _.forEach(data.definitions, function (definition) {
+            definition.imports = definition.refs
+                .map(ref => ref.typescriptType)
+                .filter((value, index, self) => { return self.indexOf(value) === index; })
+                .sort();
+        });
+
+        // Move the enums from refs to props
+        _.forEach(data.definitions, function (definition) {
+            let enums = definition.refs.filter(ref => defMap[ref.type].isEnum);
+            if (enums.length) {
+                definition.refs = _.difference(definition.refs, enums);
+                definition.properties = _.union(definition.properties, enums);
+            }
         });
 
         if (data.definitions.length > 0)
