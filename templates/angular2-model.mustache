@@ -10,14 +10,14 @@ export type {{&name}} = {{#items}}'{{item}}'{{^last}} |{{/last}} {{/items}} ;
 export class {{&name}} {
 	constructor(
 {{#properties}}
-		public {{name}}: {{typescriptType}} = null,
+		public {{name}}: {{{typescriptType}}} = null,
 {{/properties}}
 {{#refs}}
 	{{#isArray}}
-		public {{name}}: {{typescriptType}}[] = [],
+		public {{name}}: {{{typescriptType}}}[] = [],
 	{{/isArray}}
 	{{^isArray}}
-		public {{name}}: {{typescriptType}} = new {{typescriptType}}(),
+		public {{name}}: {{{typescriptType}}} = new {{typescriptType}}(),
 	{{/isArray}}
 {{/refs}}
 	){}

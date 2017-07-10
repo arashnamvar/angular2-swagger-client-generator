@@ -140,102 +140,102 @@ var Generator = (function () {
         };
         var defMap = {};
 
-        _.forEach(swagger.paths, function (api, path) {
-            var globalParams = [];
-
-            _.forEach(api, function (op, m) {
-                if (m.toLowerCase() === 'parameters') {
-                    globalParams = op;
-                }
-            });
-
-            _.forEach(api, function (op, m) {
-                if (authorizedMethods.indexOf(m.toUpperCase()) === -1) {
-                    return;
-                }
-
-                // The description line is optional in the spec
-                var summaryLines = [];
-                if (op.description) {
-                    summaryLines = op.description.split('\n');
-                    summaryLines.splice(summaryLines.length - 1, 1);
-                }
-
-
-
-                var method = {
-                    path: path,
-                    backTickPath: path.replace(/(\{.*?\})/g, "$$$1"),
-                    methodName: op['x-swagger-js-method-name'] ? op['x-swagger-js-method-name'] : (op.operationId ? op.operationId : that.getPathToMethodName(m, path)),
-                    method: m.toUpperCase(),
-                    angular2httpMethod: m.toLowerCase(),
-                    isGET: m.toUpperCase() === 'GET',
-                    hasPayload: !_.includes(['GET', 'DELETE', 'HEAD'], m.toUpperCase()),
-                    summaryLines: summaryLines,
-                    isSecure: swagger.security !== undefined || op.security !== undefined,
-                    parameters: [],
-                    hasJsonResponse: _.some(_.defaults([], swagger.produces, op.produces), function (response) { // TODO PREROBIT
-                        return response.indexOf('/json') != -1;
-                    })
-                };
-
-                var params = [];
-
-                if (_.isArray(op.parameters))
-                    params = op.parameters;
-
-                params = params.concat(globalParams);
-
-                _.forEach(params, function (parameter) {
-                    // Ignore headers which are injected by proxies & app servers
-                    // eg: https://cloud.google.com/appengine/docs/go/requests#Go_Request_headers
-
-                    if (parameter['x-proxy-header'] && !data.isNode)
-                        return;
-
-                    if (_.has(parameter, 'schema') && _.isString(parameter.schema.$ref))
-                        parameter.type = that.camelCase(that.getRefType(parameter.schema.$ref));
-
-                    parameter.camelCaseName = that.camelCase(parameter.name);
-
-                    if (parameter.type === 'integer' || parameter.type === 'double')
-                        parameter.typescriptType = 'number';
-                    else
-                        parameter.typescriptType = parameter.type;
-
-
-                    if (parameter.enum && parameter.enum.length === 1) {
-                        parameter.isSingleton = true;
-                        parameter.singleton = parameter.enum[0];
-                    }
-
-                    if (parameter.in === 'body')
-                        parameter.isBodyParameter = true;
-
-                    else if (parameter.in === 'path')
-                        parameter.isPathParameter = true;
-
-                    else if (parameter.in === 'query') {
-                        parameter.isQueryParameter = true;
-                        if (parameter['x-name-pattern'])
-                            parameter.isPatternType = true;
-                    } else if (parameter.in === 'header')
-                        parameter.isHeaderParameter = true;
-
-                    else if (parameter.in === 'formData')
-                        parameter.isFormParameter = true;
-
-                    method.parameters.push(parameter);
-                });
-
-                if (method.parameters.length > 0)
-                    method.parameters[method.parameters.length - 1].last = true;
-
-                data.methods.push(method);
-            });
-
-
-        });
+        // _.forEach(swagger.paths, function (api, path) {
+        //     var globalParams = [];
+        //
+        //     _.forEach(api, function (op, m) {
+        //         if (m.toLowerCase() === 'parameters') {
+        //             globalParams = op;
+        //         }
+        //     });
+        //
+        //     _.forEach(api, function (op, m) {
+        //         if (authorizedMethods.indexOf(m.toUpperCase()) === -1) {
+        //             return;
+        //         }
+        //
+        //         // The description line is optional in the spec
+        //         var summaryLines = [];
+        //         if (op.description) {
+        //             summaryLines = op.description.split('\n');
+        //             summaryLines.splice(summaryLines.length - 1, 1);
+        //         }
+        //
+        //
+        //
+        //         var method = {
+        //             path: path,
+        //             backTickPath: path.replace(/(\{.*?\})/g, "$$$1"),
+        //             methodName: op['x-swagger-js-method-name'] ? op['x-swagger-js-method-name'] : (op.operationId ? op.operationId : that.getPathToMethodName(m, path)),
+        //             method: m.toUpperCase(),
+        //             angular2httpMethod: m.toLowerCase(),
+        //             isGET: m.toUpperCase() === 'GET',
+        //             hasPayload: !_.includes(['GET', 'DELETE', 'HEAD'], m.toUpperCase()),
+        //             summaryLines: summaryLines,
+        //             isSecure: swagger.security !== undefined || op.security !== undefined,
+        //             parameters: [],
+        //             hasJsonResponse: _.some(_.defaults([], swagger.produces, op.produces), function (response) { // TODO PREROBIT
+        //                 return response.indexOf('/json') != -1;
+        //             })
+        //         };
+        //
+        //         var params = [];
+        //
+        //         if (_.isArray(op.parameters))
+        //             params = op.parameters;
+        //
+        //         params = params.concat(globalParams);
+        //
+        //         _.forEach(params, function (parameter) {
+        //             // Ignore headers which are injected by proxies & app servers
+        //             // eg: https://cloud.google.com/appengine/docs/go/requests#Go_Request_headers
+        //
+        //             if (parameter['x-proxy-header'] && !data.isNode)
+        //                 return;
+        //
+        //             if (_.has(parameter, 'schema') && _.isString(parameter.schema.$ref))
+        //                 parameter.type = that.camelCase(that.getRefType(parameter.schema.$ref));
+        //
+        //             parameter.camelCaseName = that.camelCase(parameter.name);
+        //
+        //             if (parameter.type === 'integer' || parameter.type === 'double')
+        //                 parameter.typescriptType = 'number';
+        //             else
+        //                 parameter.typescriptType = parameter.type;
+        //
+        //
+        //             if (parameter.enum && parameter.enum.length === 1) {
+        //                 parameter.isSingleton = true;
+        //                 parameter.singleton = parameter.enum[0];
+        //             }
+        //
+        //             if (parameter.in === 'body')
+        //                 parameter.isBodyParameter = true;
+        //
+        //             else if (parameter.in === 'path')
+        //                 parameter.isPathParameter = true;
+        //
+        //             else if (parameter.in === 'query') {
+        //                 parameter.isQueryParameter = true;
+        //                 if (parameter['x-name-pattern'])
+        //                     parameter.isPatternType = true;
+        //             } else if (parameter.in === 'header')
+        //                 parameter.isHeaderParameter = true;
+        //
+        //             else if (parameter.in === 'formData')
+        //                 parameter.isFormParameter = true;
+        //
+        //             method.parameters.push(parameter);
+        //         });
+        //
+        //         if (method.parameters.length > 0)
+        //             method.parameters[method.parameters.length - 1].last = true;
+        //
+        //         data.methods.push(method);
+        //     });
+        //
+        //
+        // });
 
         _.forEach(swagger.definitions, function (defin, defVal) {
             var defName = that.camelCase(defVal);
@@ -254,16 +254,32 @@ var Generator = (function () {
 
                 var property = {
                     name: propVal,
-                    isRef: _.has(propin, '$ref') || (propin.type === 'array' && _.has(propin.items, '$ref')),
                     isArray: propin.type === 'array',
-                    type: null,
+                    isEnum: _.has(propin, 'enum'),
+                    type: propin.type,
                     typescriptType: null
                 };
 
-                if (property.isArray)
-                    property.type = _.has(propin.items, '$ref') ? that.camelCase(propin.items["$ref"].replace("#/definitions/", "")) : propin.type;
-                else
-                    property.type = _.has(propin, '$ref') ? that.camelCase(propin["$ref"].replace("#/definitions/", "")) : propin.type;
+                // Is it a reference?
+                property.isRef = property.isArray ? _.has(propin.items, '$ref') : _.has(propin, '$ref');
+
+                // For reference change type
+                if (property.isRef) {
+                    var ref = property.isArray ? propin.items.$ref : propin.$ref;
+                    property.type = that.camelCase(ref.replace("#/definitions/", ""));
+                }
+
+                // If it is enum say 'ABC', 'DEF' generate inline type like this: ('ABC'|'DEF')
+                if (property.isEnum) {
+                    var values = propin.enum;
+
+                    // Wrap string values in apostrophes
+                    if (property.type === 'string') {
+                        values = values.map(value => `'${value}'`);
+                    }
+
+                    property.type = `(${values.join('|')})`
+                }
 
                 if (property.type === 'integer' || property.type === 'double')
                     property.typescriptType = 'number';
